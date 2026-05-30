@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>GLOSSARY</title>
+  <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+          background: #0a0a0f;
+          color: #c8d0e0;
+          font-family: 'Courier New', monospace;
+          min-height: 100vh;
+          padding: 60px 40px;
+      }
+
+      .container { max-width: 760px; margin: 0 auto; }
+
+      .header {
+          text-align: center;
+          margin-bottom: 48px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid #1a2a3a;
+      }
+
+      .title { font-size: 20px; letter-spacing: 8px; color: #00f5c4; }
+      .subtitle { font-size: 11px; letter-spacing: 3px; color: #445566; margin-top: 8px; }
+
+      .term-entry {
+          border-bottom: 1px solid #1a2a3a;
+          padding: 24px 0;
+      }
+
+      .term-entry:last-child { border-bottom: none; }
+
+      .term-name {
+          font-size: 14px;
+          letter-spacing: 3px;
+          color: #00f5c4;
+          margin-bottom: 10px;
+      }
+
+      .term-desc {
+          font-size: 13px;
+          color: #8899aa;
+          line-height: 1.9;
+      }
+
+      .back-btn {
+          display: block;
+          text-align: center;
+          margin-top: 40px;
+          padding: 12px;
+          border: 1px solid #1a2a3a;
+          color: #445566;
+          font-family: 'Courier New', monospace;
+          font-size: 11px;
+          letter-spacing: 4px;
+          text-decoration: none;
+          transition: all 0.2s;
+      }
+
+      .back-btn:hover { border-color: #00f5c4; color: #00f5c4; }
+  </style>
+</head>
+<body>
+  <div class="container">
+      <div class="header">
+          <div class="title">GLOSSARY</div>
+          <div class="subtitle">PRODUCTION TERMS</div>
+      </div>
+
+      {% for term, desc in terms.items() %}
+      <div class="term-entry" id="{{ term }}">
+          <div class="term-name">{{ term }}</div>
+          <div class="term-desc">{{ desc }}</div>
+      </div>
+      {% endfor %}
+
+      <a class="back-btn" href="#" onclick="history.back(); return false;">◀ &nbsp; BACK</a>
+  </div>
+</body>
+</html>

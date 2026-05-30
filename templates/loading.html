@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ANALYZING...</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --vocal:  #ff2255;
+      --bass:   #3311ff;
+      --drums:  #ff7700;
+      --guitar: #00cc44;
+      --piano:  #00ccff;
+      --synth:  #cc44ff;
+      --text:   #dde0ee;
+      --muted:  #44445a;
+      --border: #1a1a28;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .content {
+      position: relative;
+      text-align: center;
+      color: var(--text);
+    }
+
+    .analyzing-title {
+      font-size: 22px;
+      letter-spacing: 8px;
+      background: linear-gradient(90deg, #ff2255, #4422ff, #00ccff, #00cc44);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 40px;
+    }
+
+    .track-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 32px;
+    }
+
+    .track-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .track-label {
+      font-size: 9px;
+      letter-spacing: 2px;
+      width: 55px;
+      text-align: right;
+      opacity: 0.5;
+    }
+
+    .track-bar {
+      height: 2px;
+      border-radius: 1px;
+      animation: scan 2s ease-in-out infinite;
+      transform-origin: left;
+    }
+
+    @keyframes scan {
+      0%, 100% { opacity: 0.3; transform: scaleX(0.6); }
+      50%       { opacity: 1;   transform: scaleX(1); }
+    }
+
+    .progress-wrap { width: 400px; margin: 0 auto; }
+
+    .progress-track {
+      height: 1px;
+      background: #1e1e2e;
+      width: 100%;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4422ff, #00ccff);
+      width: 0%;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 10px #00ccff88;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .step {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: #2a2a3e;
+      transition: color 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .step.active { color: var(--piano); }
+    .step.done   { color: var(--guitar); }
+
+    .step-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    .step-text { font-size: 10px; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+
+<div class="content">
+    <div class="analyzing-title">TIMBRE ANALYZER</div>
+
+    <div class="track-lines">
+        <div class="track-line">
+            <div class="track-label" style="color:var(--vocal)">VOCALS</div>
+            <div class="track-bar" style="background:var(--vocal);width:180px;animation-delay:0s"></div>
+        </div>
+        <div class="track-line">
+            <div class="track-label" style="color:var(--bass)">BASS</div>
+            <div class="track-bar" style="background:var(--bass);width:220px;animation-delay:0.3s"></div>
+        </div>
+        <div class="track-line">
+            <div class="track-label" style="color:var(--drums)">DRUMS</div>
+            <div class="track-bar" style="background:var(--drums);width:160px;animation-delay:0.6s"></div>
+        </div>
+        <div class="track-line">
+            <div class="track-label" style="color:var(--guitar)">GUITAR</div>
+            <div class="track-bar" style="background:var(--guitar);width:140px;animation-delay:0.9s"></div>
+        </div>
+        <div class="track-line">
+            <div class="track-label" style="color:var(--synth)">SYNTH</div>
+            <div class="track-bar" style="background:var(--synth);width:200px;animation-delay:1.2s"></div>
+        </div>
+    </div>
+
+    <div class="progress-wrap">
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="steps">
+            <div class="step" id="s1"><div class="step-dot"></div><span class="step-text">SEPARATING AUDIO TRACKS</span></div>
+            <div class="step" id="s2"><div class="step-dot"></div><span class="step-text">DETECTING BPM & NOTES</span></div>
+            <div class="step" id="s3"><div class="step-dot"></div><span class="step-text">ANALYZING EFFECTS CHAIN</span></div>
+            <div class="step" id="s4"><div class="step-dot"></div><span class="step-text">GENERATING INSIGHTS</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// SSE
+const FILENAME = {{ filename | tojson }};
+const es = new EventSource('/stream/' + encodeURIComponent(FILENAME));
+
+function setStep(progress) {
+    const s1 = document.getElementById('s1');
+    const s2 = document.getElementById('s2');
+    const s3 = document.getElementById('s3');
+    const s4 = document.getElementById('s4');
+
+    if (progress >= 10)  { s1.classList.add('active'); }
+    if (progress >= 50)  { s1.classList.remove('active'); s1.classList.add('done'); s2.classList.add('active'); }
+    if (progress >= 70)  { s2.classList.remove('active'); s2.classList.add('done'); s3.classList.add('active'); }
+    if (progress >= 90)  { s3.classList.remove('active'); s3.classList.add('done'); s4.classList.add('active'); }
+    if (progress >= 100) { s4.classList.remove('active'); s4.classList.add('done'); }
+}
+
+es.onmessage = function(e) {
+    const msg = JSON.parse(e.data);
+    document.getElementById('progressFill').style.width = msg.progress + '%';
+    setStep(msg.progress);
+    if (msg.done) {
+        es.close();
+        setTimeout(() => {
+            window.location.href = '/result/' + encodeURIComponent(FILENAME);
+        }, 600);
+    }
+};
+
+es.onerror = function() { es.close(); };
+</script>
+</body>
+</html>
