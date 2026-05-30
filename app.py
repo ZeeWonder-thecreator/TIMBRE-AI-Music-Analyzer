@@ -185,113 +185,21 @@ def extract_notes(stem_path):
 
 
 def analyze_attack(stem_path):
-    y, sr = librosa.load(stem_path, sr=None, mono=True)
-    if len(y) < 1024:
-        return {'attack_ms': None, 'sound_type': 'unknown'}
-
-    hop_length = 256
-    rms = librosa.feature.rms(y=y, frame_length=512, hop_length=hop_length)[0]
-    # backtrack=True snaps onset to the preceding energy minimum for accurate anchor
-    onset_frames = librosa.onset.onset_detect(
-        y=y, sr=sr, hop_length=hop_length, units='frames', backtrack=True
-    )
-
-    if len(onset_frames) == 0:
-        return {'attack_ms': 500.0, 'sound_type': 'pad'}
-
-    # 100ms window — Demucs bleed tails typically land at 200ms+, this excludes them
-    window_frames = max(1, int(sr * 0.1 / hop_length))
-    rms_global_max = rms.max()
-    attack_times = []
-    for onset_f in onset_frames[:10]:
-        segment = rms[onset_f: onset_f + window_frames]
-        if len(segment) < 3:
-            continue
-        local_max = segment.max()
-        # Skip near-silent frames that are just noise floor
-        if local_max < rms_global_max * 0.1:
-            continue
-        # Time to first reach 80% of the local peak — cleaner than argmax
-        above = np.where(segment >= 0.8 * local_max)[0]
-        if len(above) > 0:
-            attack_times.append(above[0] * hop_length / sr * 1000)
-
-    if not attack_times:
-        return {'attack_ms': None, 'sound_type': 'unknown'}
-
-    # 25th percentile: a few bleed-contaminated onsets won't skew the result
-    attack_ms = float(np.percentile(attack_times, 25))
-    if attack_ms < 20:
-        sound_type = 'pluck'
-    elif attack_ms < 60:
-        sound_type = 'lead'
-    else:
-        sound_type = 'pad'
-
-    return {'attack_ms': round(attack_ms, 1), 'sound_type': sound_type}
+    """
+        基于 RMS 包络分析计算音色 Attack 时间。
+        使用 onset 检测 + 25th 百分位抗噪方案。
+        核心实现不在此处展示。
+        """
+    pass
 
 
 def analyze_effects(stem_path):
-    y, sr = librosa.load(stem_path, sr=None, mono=True)
-    if len(y) < 1024:
-        return {'reverb': 'unknown', 'delay': False, 'modulation': None}
-
-    hop_length = 256
-    rms = librosa.feature.rms(y=y, frame_length=512, hop_length=hop_length)[0]
-    onset_frames = librosa.onset.onset_detect(y=y, sr=sr, hop_length=hop_length, units='frames')
-
-    # --- 混响：测量 onset 峰值后衰减到 -20dB 的时间 ---
-    reverb = 'dry'
-    decay_times = []
-    for onset_f in onset_frames[:5]:
-        window = rms[onset_f: onset_f + int(sr * 1.5 / hop_length)]
-        if len(window) < 10:
-            continue
-        peak_idx = int(np.argmax(window))
-        peak_val = window[peak_idx]
-        if peak_val < 1e-4:
-            continue
-        threshold = peak_val * 0.1  # -20dB
-        below = np.where(window[peak_idx:] < threshold)[0]
-        if len(below) > 0:
-            decay_times.append(below[0] * hop_length / sr * 1000)
-    if decay_times:
-        avg_decay = float(np.mean(decay_times))
-        if avg_decay < 100:
-            reverb = 'dry'
-        elif avg_decay < 400:
-            reverb = 'short_reverb'
-        else:
-            reverb = 'long_reverb'
-
-    # --- Delay：RMS 包络自相关，50-600ms 范围内找重复峰值 ---
-    delay = False
-    if len(rms) > 100:
-        rms_norm = rms - rms.mean()
-        autocorr = np.correlate(rms_norm, rms_norm, mode='full')
-        autocorr = autocorr[len(autocorr) // 2:]
-        autocorr = autocorr / (autocorr[0] + 1e-8)
-        min_lag = int(0.05 * sr / hop_length)
-        max_lag = int(0.6 * sr / hop_length)
-        if max_lag < len(autocorr):
-            if autocorr[min_lag:max_lag].max() > 0.6:
-                delay = True
-
-    # --- 调制：对 RMS 包络做 FFT，检测 1-10Hz 的 LFO ---
-    modulation = None
-    if len(rms) > 50:
-        rms_centered = rms - rms.mean()
-        fft_vals = np.abs(np.fft.rfft(rms_centered))
-        freqs = np.fft.rfftfreq(len(rms_centered), d=hop_length / sr)
-        lfo_mask = (freqs >= 1.0) & (freqs <= 10.0)
-        if lfo_mask.any():
-            lfo_peak = fft_vals[lfo_mask].max()
-            total_peak = fft_vals[1:].max() + 1e-8
-            if lfo_peak / total_peak > 0.5:
-                lfo_freq = freqs[lfo_mask][np.argmax(fft_vals[lfo_mask])]
-                modulation = f'tremolo({lfo_freq:.1f}Hz)'
-
-    return {'reverb': reverb, 'delay': delay, 'modulation': modulation}
+    """
+    检测音轨效果器处理特征。
+    包含混响衰减测量、自相关 Delay 检测、LFO 调制频谱分析。
+    核心实现不在此处展示。
+    """
+    pass
 
 
 def separate_audio(audio_file):
