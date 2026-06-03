@@ -1,6 +1,6 @@
 # TIMBRE — 音乐制作解构引擎
 
-> 上传一首歌，理解它的声音是如何被做出来的。
+> 上传一首歌，理解它的声音是如何被做出来的。\
 > TIMBRE helps everyday listeners understand how their favorite songs are made.
 
 TIMBRE 是一个基于真实音频测量的音乐制作分析系统。
